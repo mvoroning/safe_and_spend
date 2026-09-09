@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Т-Бюджет</title>
+<style>
+:root{
+  --bg:#EEF0F3; --surface:#FFFFFF; --surface-2:#F6F7F9; --line:#E1E5EA;
+  --ink:#0C1015; --ink-2:#525C68; --ink-3:#8B95A1;
+  --brand:#FFDD2D; --brand-ink:#0C1015;
+  --shadow:0 1px 2px rgba(12,16,21,.05), 0 12px 28px -14px rgba(12,16,21,.22);
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --pos:#1B8F52; --neg:#D23A55;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D1013; --surface:#181C21; --surface-2:#1F242A; --line:#2A3038;
+  --ink:#EEF1F4; --ink-2:#A2ACB8; --ink-3:#6D7883;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 32px -16px rgba(0,0,0,.7);
+  --pos:#3FBE78; --neg:#F2647E;
+}}
+:root[data-theme="dark"]{
+  --bg:#0D1013; --surface:#181C21; --surface-2:#1F242A; --line:#2A3038;
+  --ink:#EEF1F4; --ink-2:#A2ACB8; --ink-3:#6D7883;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 32px -16px rgba(0,0,0,.7);
+  --pos:#3FBE78; --neg:#F2647E;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;line-height:1.55}
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px 80px}
+h1{font-size:28px;font-weight:800;letter-spacing:-.025em;margin:0 0 6px}
+h2{font-size:19px;font-weight:750;letter-spacing:-.015em;margin:0 0 4px}
+h3{font-size:14px;font-weight:700;margin:0 0 8px}
+p{margin:0 0 12px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.sub{color:var(--ink-2);font-size:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  padding:22px;box-shadow:var(--shadow);margin-bottom:18px}
+.num{font-variant-numeric:tabular-nums}
+button{font:inherit;cursor:pointer;border-radius:12px;border:1px solid var(--line);
+  background:var(--surface-2);color:var(--ink);padding:10px 16px;font-weight:650}
+button:hover{border-color:var(--ink-3)}
+button.primary{background:var(--brand);color:var(--brand-ink);border-color:transparent;font-weight:750}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.sel{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.drop{border:2px dashed var(--line);border-radius:18px;padding:40px 22px;text-align:center;
+  background:var(--surface-2);transition:border-color .15s}
+.drop.over{border-color:var(--brand)}
+.muted{color:var(--ink-3);font-size:13px}
+.priv{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);
+  border-radius:12px;padding:12px 14px;font-size:13px;color:var(--ink-2);margin-top:16px}
+.priv b{color:var(--ink)}
+/* статус */
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:750;
+  padding:5px 11px;border-radius:999px;background:var(--surface-2);color:var(--ink-2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ink-3)}
+.st-calm .dot,.st-usual .dot{background:var(--pos)}
+.st-slow .dot,.st-over .dot{background:var(--neg)}
+.st-wait .dot{background:var(--ink-3)}
+.st-wait .headline{color:var(--ink-2)}
+.headline{font-size:26px;font-weight:800;letter-spacing:-.03em;margin:10px 0 4px;text-wrap:balance}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-top:18px}
+.fig{background:var(--surface-2);border-radius:12px;padding:12px 14px}
+.fig .k{font-size:11px;color:var(--ink-3);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.fig .v{font-size:19px;font-weight:750;margin-top:3px}
+.bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:16px}
+.bar i{display:block;height:100%;background:var(--brand)}
+/* направления */
+.dir{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;
+  background:var(--surface-2)}
+.dir .kk{font-family:var(--mono);font-size:13px;font-weight:650}
+.dir .st{font-size:13px;color:var(--ink-2);margin-top:3px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.opts button{font-size:13px;padding:8px 13px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:6px 0;border-bottom:1px solid var(--line)}
+td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:650}
+tr:last-child td{border-bottom:none}
+.err{background:#D23A5514;border:1px solid var(--neg);color:var(--neg);
+  border-radius:12px;padding:14px 16px;font-size:14px;margin-bottom:16px}
+.steps{display:flex;gap:8px;margin-bottom:22px;font-size:12px;color:var(--ink-3);font-weight:700}
+.steps i{font-style:normal;padding:4px 10px;border-radius:999px;background:var(--surface-2)}
+.steps i.on{background:var(--ink);color:var(--surface)}
+textarea{width:100%;font:inherit;font-size:14px;padding:11px 13px;border-radius:12px;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink);resize:vertical}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+  border-top-color:var(--ink-2);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Т-Бюджет</div>
+  <h1 id="h1">Мой темп трат</h1>
+  <p class="sub" id="lede">Загрузи справку о движении средств — увидишь, укладываешься ли ты
+    в свой обычный темп до следующей зарплаты.</p>
+
+  <div class="steps" id="steps" hidden>
+    <i data-s="1">1 · Справка</i><i data-s="2">2 · Твои счета</i><i data-s="3">3 · Результат</i>
+  </div>
+
+  <div id="err" class="err" hidden></div>
+
+  <!-- 1 -->
+  <section id="scr-upload">
+    <div class="card">
+      <div class="drop" id="drop">
+        <p style="font-weight:700;margin-bottom:6px">Перетащи PDF справки сюда</p>
+        <p class="muted" style="margin-bottom:16px">или</p>
+        <button class="primary" id="pick">Выбрать файл</button>
+        <input type="file" id="file" accept="application/pdf" hidden>
+        <p class="muted" id="engine-state" style="margin:16px 0 0"><span class="spin"></span> движок загружается…</p>
+      </div>
+      <div class="priv">
+        <span>🔒</span>
+        <div><b>Справка никуда не отправляется.</b> Файл читается прямо в браузере: ни PDF,
+          ни операции, ни суммы не уходят на сервер — сервера у этой страницы просто нет.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Где взять справку</h3>
+      <p class="sub" style="margin:0">Приложение Т-Банка → Дебетовая карта → Выписка и справки →
+        <b>Справка о движении средств</b>. Период — хотя бы полгода: модели нужно увидеть
+        несколько зарплат подряд, иначе ей не с чем сравнивать твой темп.</p>
+    </div>
+  </section>
+
+  <!-- 1b -->
+  <section id="scr-income" hidden>
+    <div class="card">
+      <h2 id="inc-title">Какие поступления — твой доход?</h2>
+      <p class="sub" id="inc-lede"></p>
+      <div id="inc-list"></div>
+      <button class="primary" id="inc-done" disabled>Дальше</button>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="scr-onb" hidden>
+    <div class="card">
+      <h2>Куда ты переводишь деньги</h2>
+      <p class="sub" id="onb-lede"></p>
+      <div id="dirs"></div>
+      <button class="primary" id="onb-done" disabled>Показать темп</button>
+      <p class="muted" style="margin:12px 0 0">Ответы хранятся только в этом браузере
+        и переживут следующую загрузку справки.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="scr-res" hidden>
+    <div class="card" id="hero"></div>
+    <div class="card" id="budget"></div>
+    <div class="card" id="dirs-res"></div>
+    <div class="card" id="fb"></div>
+  </section>
+</div>
+
+<script type="module">
+import * as pdfjs from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs";
+pdfjs.GlobalWorkerOptions.workerSrc =
+  "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+window.__pdfjs = pdfjs;
+</script>
+<script src="https://cdn.jsdelivr.net/npm/pyodide@0.28.3/pyodide.js"></script>
+<script>
+const PYFILES = {"parse_statement.py": "# -*- coding: utf-8 -*-\n\"\"\"Парсер справки о движении средств Т-Банка: PDF → список операций.\n\nЭталонная реализация на Python. Служит двум целям:\n  1) отладка и регрессия — контрольные суммы справки должны сходиться копейка\n     в копейку, иначе модель считает не то;\n  2) образец для переноса на pdf.js, где парсинг пойдёт в браузере.\n\nИз справки берётся СУММА В ВАЛЮТЕ КАРТЫ — вторая колонка. Первая может быть\nв валюте операции — любая поездка за границу даёт такие строки, — и по ней\nсчитать нельзя.\n\nДата операции, а не списания: модель меряет темп по дню, когда клиент потратил,\nа не по дню, когда банк провёл клиринг. Расхождение бывает до суток.\n\nЗапуск:  python3 tools/parse_statement.py <файл.pdf> [-o out.json]\n\"\"\"\nimport argparse, hashlib, json, re, sys\n\n# --- разметка страницы -------------------------------------------------------\nHEADER = {\"Дата и время\", \"операции\", \"Дата\", \"списания\", \"Сумма в валюте\",\n          \"Сумма операции\", \"в валюте карты\", \"Описание\", \"Номер\", \"карты\"}\nFOOTER = re.compile(r\"АО «ТБанк»|БИК \\d|^\\d{1,3}$|С уважением|Руководитель Управления|\"\n                    r\"^Пополнения:|^Расходы:|^\\s*$|^Е\\.[А-Я]\\.\")\n\nSP  = r\"[    ]\"                      # обычный, неразрывный, узкий пробелы\nNUM = rf\"[+\\-]?\\d(?:{SP}?\\d)*[.,]\\d{{2}}\"\nCUR = r\"[^\\s\\d]{1,3}\"                                # ₽, Br, $, € …\nDT  = r\"\\d{2}\\.\\d{2}\\.\\d{4}\\n\\d{2}:\\d{2}\"\n\nROW = re.compile(\n    rf\"(\\d{{2}}\\.\\d{{2}}\\.\\d{{4}})\\n(\\d{{2}}:\\d{{2}})\\n\"   # дата и время операции\n    rf\"(\\d{{2}}\\.\\d{{2}}\\.\\d{{4}})\\n\\d{{2}}:\\d{{2}}\\n\"     # дата и время списания\n    rf\"({NUM}){SP}({CUR}){SP}\"                             # сумма в валюте операции\n    rf\"({NUM}){SP}₽{SP}\"                                   # сумма в валюте карты\n    rf\"(.*?)(?=\\n{DT}\\n{DT}\\n|\\Z)\", re.S)\n\nTOTAL_LINE = re.compile(rf\"^({NUM}){SP}?₽(Пополнения|Расходы):\")\nPERIOD = re.compile(r\"за период с (\\d{2}\\.\\d{2}\\.\\d{4}) по (\\d{2}\\.\\d{2}\\.\\d{4})\")\n\n\ndef money(s):\n    return float(re.sub(SP, \"\", s).replace(\",\", \".\"))\n\n\ndef extract_text(path):\n    from pypdf import PdfReader          # только для запуска с диска, см. parse_text\n    return \"\\n\".join(p.extract_text() or \"\" for p in PdfReader(path).pages)\n\n\ndef control_totals(raw):\n    \"\"\"Контрольные суммы из хвоста справки — единственная внешняя проверка.\n\n    Ищем построчно: склеивать строки нельзя, номер карты предыдущей операции\n    прилипает к сумме и превращает 2,8 млн в 8 млрд.\"\"\"\n    got = {}\n    for ln in raw.split(\"\\n\"):\n        m = TOTAL_LINE.match(ln.strip())\n        if m:\n            got[m.group(2)] = money(m.group(1))\n    return got.get(\"Пополнения\"), got.get(\"Расходы\")\n\n\ndef period(raw):\n    \"\"\"Границы периода справки. Конец периода — это «сегодня» для модели:\n    брать дату последней операции нельзя, два дня без трат сдвинули бы день\n    цикла назад и завысили темп.\"\"\"\n    m = PERIOD.search(raw.replace(\"\\n\", \" \"))\n    if not m:\n        return None, None\n    return tuple(\"-\".join(reversed(d.split(\".\"))) for d in m.groups())\n\n\ndef parse_text(raw):\n    \"\"\"Разбирает текстовый слой справки. Отделено от чтения PDF намеренно:\n    в браузере текст добывает pdf.js, и структура его вывода совпадает с pypdf\n    строка в строку — проверено на этой справке.\"\"\"\n    txt = \"\\n\".join(s for ln in raw.split(\"\\n\") for s in [ln.strip()]\n                    if s not in HEADER and not FOOTER.search(s))\n    ops, seen = [], {}\n    for m in ROW.finditer(txt):\n        d_op, t_op, d_wr, a_src, cur, a_rub, desc = m.groups()\n        desc = \" \".join(desc.split())\n        card = None\n        mc = re.search(r\"\\s(\\d{4})$\", desc)\n        if mc:\n            card, desc = mc.group(1), desc[:mc.start()].strip()\n        amt = money(a_rub)\n        dd, mm, yy = d_op.split(\".\")\n        date = f\"{yy}-{mm}-{dd}\"\n        # Стабильный ключ операции: правки клиента переживают перезагрузку\n        # следующей справки, где порядковый номер строки будет уже другим.\n        base = f\"{date}|{t_op}|{amt:.2f}|{desc}\"\n        h = hashlib.sha1(base.encode()).hexdigest()[:12]\n        seen[h] = seen.get(h, 0) + 1\n        ops.append({\n            \"id\": h if seen[h] == 1 else f\"{h}-{seen[h]}\",\n            \"date\": date, \"time\": t_op,\n            \"date_written\": \"-\".join(reversed(d_wr.split(\".\"))),\n            \"amount\": abs(amt),\n            \"direction\": \"income\" if amt > 0 else \"expense\",\n            \"description\": desc,\n            \"card\": card,\n            \"fx\": None if cur == \"₽\" else {\"currency\": cur, \"amount\": abs(money(a_src))},\n        })\n    ops.sort(key=lambda r: (r[\"date\"], r[\"time\"]))\n    return ops, control_totals(raw)\n\n\ndef parse(path):\n    return parse_text(extract_text(path))\n\n\ndef self_check(ops, totals):\n    \"\"\"Сверка с контрольными суммами справки. Расхождение = потерянные операции.\"\"\"\n    inc = sum(r[\"amount\"] for r in ops if r[\"direction\"] == \"income\")\n    exp = sum(r[\"amount\"] for r in ops if r[\"direction\"] == \"expense\")\n    c_inc, c_exp = totals\n    ok = True\n    for name, got, want in ((\"доходы\", inc, c_inc), (\"расходы\", exp, c_exp)):\n        if want is None:\n            print(f\"  {name}: {got:,.2f}  (контроля в справке нет)\", file=sys.stderr)\n            continue\n        d = got - want\n        mark = \"✓\" if abs(d) < 0.01 else \"✗\"\n        print(f\"  {mark} {name}: {got:,.2f}  контроль {want:,.2f}  Δ {d:+,.2f}\", file=sys.stderr)\n        ok &= abs(d) < 0.01\n    return ok\n\n\nif __name__ == \"__main__\":\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"pdf\")\n    ap.add_argument(\"-o\", \"--out\")\n    a = ap.parse_args()\n    ops, totals = parse(a.pdf)\n    print(f\"операций: {len(ops)}  период {ops[0]['date']} .. {ops[-1]['date']}\", file=sys.stderr)\n    ok = self_check(ops, totals)\n    if a.out:\n        json.dump(ops, open(a.out, \"w\", encoding=\"utf-8\"), ensure_ascii=False, indent=1)\n        print(f\"записано: {a.out}\", file=sys.stderr)\n    else:\n        json.dump(ops, sys.stdout, ensure_ascii=False, indent=1)\n    sys.exit(0 if ok else 1)\n", "engine/__init__.py": "", "engine/model.py": "# -*- coding: utf-8 -*-\n\"\"\"Т-Бюджет: реализация модели из MODEL.md §3 (порядок вычисления).\nКонстанты — §4. Все откалиброваны на n=1 (ADR-0022).\n\nМодель — чистая функция от записей, профиля клиента и даты. Записи готовит\nадаптер источника (engine/sources): он знает, как банк назвал контрагента,\nмодель — не знает и знать не должна.\n\"\"\"\nimport statistics\nfrom datetime import date, timedelta\nfrom collections import defaultdict\n\n# --- §4 Константы ------------------------------------------------------------\nDEFAULTS = {\n    \"W_EARLY\": 10,        # дней до якоря\n    \"W_LATE\": 3,          # дней после якоря\n    \"THETA_S\": 50_000,    # порог детекции отложенного, ₽ — см. theta_s_share\n    \"W_S\": 1,             # окно детекции отложенного, ±дней\n    \"THETA\": 0.15,        # доля бюджета: выше — событие\n    \"THETA_D\": 0.25,      # мин. доля медианного события дохода, чтобы открыть цикл (ADR-0023)\n    \"THETA_R\": 0.50,      # доля возврата, выше которой направление — буфер (ADR-0024)\n    \"W_R\": 180,           # окно наблюдения за возвратами, дней\n    \"MIN_OUT\": 3,         # сколько исходящих нужно, чтобы судить о направлении\n    \"M\": 0.15,            # полуширина статуса «обычно» — НЕ откалибровано\n    \"W1\": 0.80,           # границы уровней высказывания — НЕ откалиброваны\n    \"W2\": 0.30,\n}\n\n# Профиль по умолчанию воспроизводит поведение до ADR-0026: направление, о котором\n# судить не по чему, считается отложенным. На справке этот дефолт срабатывает\n# всегда и ломает бюджет — там профиль обязан задать directions явно.\nDEFAULT_PROFILE = {\n    \"constants\": {},          # переопределения DEFAULTS\n    \"theta_s_share\": None,    # если задано — θ_S берётся долей медианного дохода (§8 п.2)\n    \"directions\": {},         # {ключ: \"buffer\" | \"reserve\" | \"external\"} — ADR-0026\n    \"unknown_direction\": \"reserve\",   # \"reserve\" (legacy) | \"ask\" (модель не высказывается)\n    \"returns_attributed\": True,       # связывает ли источник входящий перевод с направлением\n    \"slots\": (\"mid\", \"eom\"),  # календарная сетка якорей\n    \"scan_from\": None,        # начало сканирования якорей; по умолчанию — первая запись\n    \"scan_to\": None,          # конец; по умолчанию — последняя запись плюс два месяца\n}\n\n\ndef eom(y, m):\n    return date(y + m // 12, m % 12 + 1, 1) - timedelta(days=1) if m < 12 else date(y, 12, 31)\n\n\ndef compute(rows, profile=None, today=None):\n    \"\"\"Собирает состояние модели. rows — записи из адаптера источника,\n    отсортированные по дате.\"\"\"\n    p = dict(DEFAULT_PROFILE, **(profile or {}))\n    K = dict(DEFAULTS, **p.get(\"constants\", {}))\n    W_EARLY, W_LATE, W_S = K[\"W_EARLY\"], K[\"W_LATE\"], K[\"W_S\"]\n    THETA, THETA_D, THETA_R = K[\"THETA\"], K[\"THETA_D\"], K[\"THETA_R\"]\n    W_R, MIN_OUT, M, W1, W2 = K[\"W_R\"], K[\"MIN_OUT\"], K[\"M\"], K[\"W1\"], K[\"W2\"]\n    SLOTS = tuple(p[\"slots\"])\n    TODAY = today or max(r[\"date\"] for r in rows)\n\n    rows = sorted(rows, key=lambda r: (r[\"date\"], r[\"id\"]))\n    salary = [r for r in rows if r[\"income_kind\"] == \"salary\"]\n    if not salary:\n        return {\"error\": \"no_income\", \"tx_count\": len(rows),\n                \"today\": TODAY.isoformat(), \"cycles_total\": 0}\n\n    # θ_S: рублёвый порог не переносится между уровнями дохода (§8 п.2). Если\n    # профиль задал долю, порог считается от медианного события дохода — но\n    # медиана известна только после разметки циклов, поэтому вычисляется лениво.\n    theta_s_box = {\"v\": K[\"THETA_S\"]}\n\n    def THETA_S():\n        return theta_s_box[\"v\"]\n\n    # --- Направление перевода себе (ADR-0024, ADR-0026) ----------------------\n    def return_rate(key, upto):\n        \"\"\"Доля возврата по направлению за окно W_R дней до даты upto.\n\n        Возвратом считается только входящий меньше θ_S. Крупный входящий — это\n        изъятие из накоплений под событие, а не подпитка карты под поток, и\n        засчитывать его как возврат нельзя: одно такое снятие переписало бы\n        природу направления, куда клиент откладывал годами.\n        Ретроспективы нет: считаем только по тому, что модель уже видела.\"\"\"\n        lo = upto - timedelta(days=W_R)\n        out = inc = 0.0\n        n_out = 0\n        for r in rows:\n            if r[\"date\"] >= upto:\n                break\n            if r[\"date\"] < lo or own_key(r) != key:\n                continue\n            if r[\"direction\"] == \"expense\":\n                out += r[\"amount\"]\n                n_out += 1\n            elif r[\"amount\"] < THETA_S():\n                inc += r[\"amount\"]\n        if n_out < MIN_OUT or out == 0:\n            return None                       # судить не по чему\n        return inc / out\n\n    def own_key(r):\n        \"\"\"Направление перевода себе — или None, если это обычная трата.\n\n        Источник помечает кандидатов: в справке перевод себе по номеру телефона\n        и перевод другому человеку по номеру телефона неотличимы. Отделить их\n        может только клиент, объявив направление чужим (ADR-0026).\"\"\"\n        k = r[\"self_key\"]\n        if not k or p[\"directions\"].get(k) == \"external\":\n            return None\n        return k\n\n    def direction_class(key, on):\n        \"\"\"Буфер, отложенное, чужое направление или «неизвестно».\n\n        Объявление клиента старше автоматики: на справке возвраты обезличены,\n        и доля возврата там пуста по всем направлениям сразу (ADR-0026).\"\"\"\n        declared = p[\"directions\"].get(key)\n        if declared in (\"buffer\", \"reserve\", \"external\"):\n            return declared\n        rr = return_rate(key, on)\n        if rr is None:\n            return None                       # неизвестно\n        if rr == 0 and not p[\"returns_attributed\"]:\n            # Источник не связывает возвраты с направлением. Ноль возвратов здесь —\n            # слепота источника, а не факт о направлении: в справке деньги\n            # возвращаются как обезличенный «Перевод себе». Принять этот ноль\n            # за отсутствие возвратов значит уверенно объявить буфер накоплениями\n            # и вычесть его из бюджета (ADR-0026).\n            return None\n        return \"buffer\" if rr >= THETA_R else \"reserve\"\n\n    def is_buffer(key, on):\n        \"\"\"Пока данных не хватает, направление считается отложенным: это\n        консервативный дефолт, он занижает бюджет, а не завышает (ADR-0003).\"\"\"\n        c = direction_class(key, on)\n        return c == \"buffer\" if c else False\n\n    # --- 1. Привязка поступлений к якорям (§2.1) -----------------------------\n    # Якорь — календарный слот: середина месяца и конец месяца. Базовая сетка\n    # выучена из истории и стабильна; смещение слота (ADR-0013 «якорь сместился»)\n    # применяется только к предсказанию СЛЕДУЮЩЕГО якоря открытого цикла — внутри\n    # окна [−W_late, +W_early] базовая сетка ловит все поступления и без сдвига.\n    def slot_base(y, m, slot):\n        return date(y, m, 15) if slot == \"mid\" else eom(y, m)\n\n    first, last = rows[0][\"date\"], rows[-1][\"date\"]\n    scan = p[\"scan_from\"] or date(first.year, first.month, 1)\n    end = p[\"scan_to\"] or eom(last.year + (last.month + 1) // 12,\n                              (last.month + 1) % 12 + 1)\n\n    cycles, used = [], set()\n    shift = {s: [] for s in SLOTS}\n    cur = scan\n    while cur <= end:\n        for slot in SLOTS:\n            a_ = slot_base(cur.year, cur.month, slot)\n            if not (scan <= a_ <= end):\n                continue\n            window = [q for q in salary\n                      if q[\"id\"] not in used\n                      and -W_LATE <= (a_ - q[\"date\"]).days <= W_EARLY]\n            if not window:\n                continue\n            # Цикл открывает только поступление масштаба события дохода (ADR-0023).\n            # Мелкая доплата — компенсация питания, доплата за период — попадает в\n            # окно якоря, но границы цикла не двигает: она внутрицикловой доход.\n            # База сравнения — медиана прошлых событий, а не сумма самого окна:\n            # иначе порог зависит от того, что ещё случайно попало в окно.\n            base = statistics.median([cc[\"D\"] for cc in cycles]) if cycles else 0\n            while len(window) > 1 and base:\n                f0 = min(x[\"date\"] for x in window)\n                head = [x for x in window if x[\"date\"] == f0]\n                if sum(x[\"amount\"] for x in head) >= THETA_D * base:\n                    break\n                window = [x for x in window if x[\"date\"] != f0]\n            # хвостовые доплаты того же окна — тоже внутрицикловые\n            if base:\n                s0 = min(x[\"date\"] for x in window)\n                tail = [x for x in window\n                        if x[\"date\"] > s0 and x[\"amount\"] < THETA_D * base]\n                window = [x for x in window if x not in tail]\n            if base and sum(x[\"amount\"] for x in window) < THETA_D * base:\n                continue\n            s = min(q[\"date\"] for q in window)     # цикл начинает первое поступление\n            main = max(window, key=lambda q: q[\"amount\"])\n            for q in window:\n                used.add(q[\"id\"])\n            shift[slot].append((main[\"date\"] - a_).days)\n            cycles.append({\"anchor\": a_, \"slot\": slot, \"start\": s,\n                           \"D\": sum(q[\"amount\"] for q in window),\n                           \"parts\": len(window), \"intra\": []})\n        cur = date(cur.year + cur.month // 12, cur.month % 12 + 1, 1)\n\n    if not cycles:\n        return {\"error\": \"no_cycles\", \"tx_count\": len(rows),\n                \"today\": TODAY.isoformat(), \"cycles_total\": 0}\n\n    def off(slot):\n        h = shift[slot][-3:]\n        return int(statistics.median(h)) if h else 0\n\n    cycles.sort(key=lambda c: c[\"start\"])\n    if p[\"theta_s_share\"]:\n        theta_s_box[\"v\"] = p[\"theta_s_share\"] * statistics.median([c[\"D\"] for c in cycles])\n\n    intra = [q for q in salary if q[\"id\"] not in used]\n    for q in intra:                                   # внутрицикловой доход\n        for c in reversed(cycles):\n            if c[\"start\"] <= q[\"date\"]:\n                c[\"intra\"].append(q[\"amount\"])\n                break\n\n    for i, c in enumerate(cycles):\n        if i + 1 < len(cycles):\n            c[\"n\"] = (cycles[i + 1][\"start\"] - c[\"start\"]).days\n            c[\"end\"] = cycles[i + 1][\"start\"] - timedelta(days=1)\n        else:                                         # открытый цикл: до след. якоря\n            nxt = None\n            for mo in range(0, 3):\n                y, m = c[\"start\"].year, c[\"start\"].month + mo\n                y, m = y + (m - 1) // 12, (m - 1) % 12 + 1\n                for slot in SLOTS:\n                    a_ = slot_base(y, m, slot) + timedelta(days=off(slot))\n                    if a_ > c[\"start\"] and (nxt is None or a_ < nxt):\n                        nxt = a_\n            c[\"n\"] = (nxt - c[\"start\"]).days\n            c[\"end\"] = nxt - timedelta(days=1)\n            c[\"next_anchor\"] = nxt\n            c[\"anchor_shift\"] = {s: off(s) for s in SLOTS}\n\n    # --- 2. Отложенное (§2.2) ------------------------------------------------\n    for c in cycles:\n        near = [r for r in rows\n                if r[\"direction\"] == \"expense\" and own_key(r)\n                and r[\"amount\"] >= THETA_S() and abs((r[\"date\"] - c[\"start\"]).days) <= W_S]\n        S = [r for r in near if not is_buffer(own_key(r), c[\"start\"])]\n        # θ_S — порог детекции ОТЛОЖЕННОГО. К буферу он не применяется: буфер не\n        # вычитается из бюджета при любом размере, а показать его величину надо.\n        Buf = [r for r in rows\n               if r[\"direction\"] == \"expense\" and own_key(r)\n               and abs((r[\"date\"] - c[\"start\"]).days) <= W_S\n               and is_buffer(own_key(r), c[\"start\"])]\n        c[\"S\"] = sum(r[\"amount\"] for r in S)\n        c[\"Buf0\"] = sum(r[\"amount\"] for r in Buf)     # ушло на буфер на старте цикла\n        c[\"S_rows\"] = [(r[\"description\"], r[\"amount\"]) for r in S]\n        c[\"Buf_rows\"] = [(r[\"description\"], r[\"amount\"],\n                          return_rate(own_key(r), c[\"start\"])) for r in Buf]\n        # все переводы себе у границы цикла — с классификацией, включая мелкие:\n        # интерфейс должен показывать, что модель с ними сделала и почему\n        c[\"near_all\"] = [\n            {\"desc\": r[\"description\"], \"amount\": r[\"amount\"], \"date\": r[\"date\"].isoformat(),\n             \"rr\": return_rate(own_key(r), c[\"start\"]),\n             \"buffer\": is_buffer(own_key(r), c[\"start\"]),\n             \"counted\": r[\"amount\"] >= THETA_S() and not is_buffer(own_key(r), c[\"start\"])}\n            for r in rows\n            if r[\"direction\"] == \"expense\" and own_key(r)\n            and abs((r[\"date\"] - c[\"start\"]).days) <= W_S]\n        c[\"B\"] = c[\"D\"] - c[\"S\"]      # буфер из бюджета не вычитается (ADR-0024)\n                                      # E (объявленный доход) = 0, клиент не объявлял\n\n    # --- 3-4. Классификация трат (§2.3) --------------------------------------\n    def cycle_expenses(c):\n        return [r for r in rows\n                if r[\"direction\"] == \"expense\"\n                and c[\"start\"] <= r[\"date\"] <= c[\"end\"]\n                and not own_key(r)]\n\n    for c in cycles:\n        th = THETA * c[\"B\"] if c[\"B\"] > 0 else float(\"inf\")\n        exp = cycle_expenses(c)\n        c[\"flow\"] = [r for r in exp if r[\"amount\"] <= th]\n        c[\"events\"] = [r for r in exp if r[\"amount\"] > th]\n        c[\"theta_rub\"] = th\n        c[\"F_total\"] = sum(r[\"amount\"] for r in c[\"flow\"])\n        c[\"V_total\"] = sum(r[\"amount\"] for r in c[\"events\"])\n\n    def F(c, d):   # накопленный поток к дню d (день 1 = день старта)\n        lim = c[\"start\"] + timedelta(days=d - 1)\n        return sum(r[\"amount\"] for r in c[\"flow\"] if r[\"date\"] <= lim)\n\n    def V(c, d):\n        lim = c[\"start\"] + timedelta(days=d - 1)\n        return sum(r[\"amount\"] for r in c[\"events\"] if r[\"date\"] <= lim)\n\n    # --- 7. Коридор W(d) (§2.7) ----------------------------------------------\n    done = [c for c in cycles[:-1] if c[\"B\"] > 0 and c[\"F_total\"] > 0]\n    corridor = {}\n    for d in range(1, 21):\n        ratios = [(F(c, d) / d * c[\"n\"]) / c[\"F_total\"] for c in done if c[\"n\"] > d]\n        if len(ratios) >= 8:\n            ratios.sort()\n            p10 = ratios[int(0.10 * (len(ratios) - 1))]\n            p90 = ratios[int(0.90 * (len(ratios) - 1))]\n            corridor[d] = {\"p10\": p10, \"p90\": p90, \"w\": p90 - p10, \"n\": len(ratios)}\n\n    # --- 6. Резерв и обязательства (§2.5) ------------------------------------\n    res = buf = 0.0\n    for r in rows:\n        if not own_key(r):\n            continue\n        sign = 1 if r[\"direction\"] == \"expense\" else -1\n        if is_buffer(own_key(r), r[\"date\"]):\n            buf += sign * r[\"amount\"]\n        else:\n            res += sign * r[\"amount\"]\n\n    # --- Текущий цикл --------------------------------------------------------\n    c = cycles[-1]\n    d = (TODAY - c[\"start\"]).days + 1\n    Fd, Vd = F(c, d), V(c, d)\n    v = Fd / d\n    norm = (c[\"B\"] - Fd) / (c[\"n\"] - d) if c[\"n\"] > d else None\n    R = v / norm if norm and norm > 0 else float(\"inf\")\n    Ost = c[\"B\"] - Fd\n\n    W = corridor.get(d, {}).get(\"w\", 99)\n    level = 1 if W > W1 else (2 if W > W2 else 3)\n    if Ost < 0:\n        status = \"over\"\n    elif R < 1 - M:\n        status = \"calm\"\n    elif R <= 1 + M:\n        status = \"usual\"\n    else:\n        status = \"slow\"\n\n    # «обычно ты тратишь около X в день» — медиана дневного потока по завершённым циклам\n    daily = []\n    for cc in done:\n        per = defaultdict(float)\n        for r in cc[\"flow\"]:\n            per[r[\"date\"]] += r[\"amount\"]\n        for k in range(cc[\"n\"]):\n            daily.append(per.get(cc[\"start\"] + timedelta(days=k), 0.0))\n    usual_daily = statistics.median(daily) if daily else 0.0\n    usual_daily_mean = statistics.mean(daily) if daily else 0.0\n\n    # --- Дополнительно для интерфейса ----------------------------------------\n    def pct(xs, q):\n        xs = sorted(xs)\n        return xs[int(q * (len(xs) - 1))] if xs else 0.0\n\n    # сколько обычно потрачено к этому же дню цикла\n    same_day = [F(cc, d) for cc in done if cc[\"n\"] > d]\n    # кандидаты в отложенное, не прошедшие порог θ_S (клиент вправе поправить, OVERRIDES 0002)\n    near = [r for r in rows\n            if r[\"direction\"] == \"expense\" and own_key(r)\n            and r[\"amount\"] < THETA_S() and abs((r[\"date\"] - c[\"start\"]).days) <= W_S]\n    # доля отложенного по прошлым циклам — запасной вариант из §2.2, шаг 2\n    share_hist = [cc[\"S\"] / cc[\"D\"] for cc in done if cc[\"D\"] > 0]\n\n    # --- Сетка «цикл × день»: модель высказывается на каждом дне (§6) --------\n    def utter(cc, dd):\n        Fd_, Vd_ = F(cc, dd), V(cc, dd)\n        v_ = Fd_ / dd\n        left = cc[\"n\"] - dd\n        norm_ = (cc[\"B\"] - Fd_) / left if left > 0 else None\n        R_ = (v_ / norm_) if norm_ and norm_ > 0 else None\n        Ost_ = cc[\"B\"] - Fd_\n        W_ = corridor.get(dd, {}).get(\"w\", 99)\n        lvl = 1 if W_ > W1 else (2 if W_ > W2 else 3)\n        if Ost_ < 0:\n            st = \"over\"\n        elif R_ is None:\n            st = \"unknown\"\n        elif R_ < 1 - M:\n            st = \"calm\"\n        elif R_ <= 1 + M:\n            st = \"usual\"\n        else:\n            st = \"slow\"\n        return {\"d\": dd, \"F\": round(Fd_, 2), \"V\": round(Vd_, 2), \"v\": round(v_, 2),\n                \"norm\": round(norm_, 2) if norm_ else None,\n                \"R\": round(R_, 3) if R_ else None, \"Ost\": round(Ost_, 2),\n                \"W\": round(W_, 3), \"level\": lvl, \"status\": st}\n\n    grid = []\n    for cc in cycles:\n        last_d = (TODAY - cc[\"start\"]).days + 1 if cc is cycles[-1] else cc[\"n\"]\n        grid.append({\n            \"start\": cc[\"start\"].isoformat(), \"end\": cc[\"end\"].isoformat(),\n            \"n\": cc[\"n\"], \"D\": round(cc[\"D\"], 2), \"S\": round(cc[\"S\"], 2),\n            \"B\": round(cc[\"B\"], 2), \"theta_rub\": round(cc[\"theta_rub\"], 2),\n            \"parts\": cc[\"parts\"], \"intra\": cc[\"intra\"], \"Buf0\": round(cc[\"Buf0\"], 2),\n            \"Buf_rows\": cc[\"Buf_rows\"], \"near_all\": cc[\"near_all\"],\n            \"days\": [utter(cc, dd) for dd in range(1, min(last_d, cc[\"n\"]) + 1)],\n            \"tx\": [{\"d\": (r[\"date\"] - cc[\"start\"]).days + 1, \"date\": r[\"date\"].isoformat(),\n                    \"desc\": r[\"description\"], \"amount\": r[\"amount\"], \"cat\": r.get(\"category\"),\n                    \"ev\": r[\"amount\"] > cc[\"theta_rub\"]}\n                   for r in sorted(cycle_expenses(cc), key=lambda r: (r[\"date\"], r[\"id\"]))],\n        })\n\n    keys = {r[\"self_key\"] for r in rows if r[\"self_key\"]}\n    dirs = sorted(\n        [{\"key\": k,\n          \"out\": round(sum(r[\"amount\"] for r in rows\n                           if r[\"self_key\"] == k and r[\"direction\"] == \"expense\"), 2),\n          \"inc\": round(sum(r[\"amount\"] for r in rows\n                           if r[\"self_key\"] == k and r[\"direction\"] == \"income\"), 2),\n          \"inc_small\": round(sum(r[\"amount\"] for r in rows\n                                 if r[\"self_key\"] == k and r[\"direction\"] == \"income\"\n                                 and r[\"amount\"] < THETA_S()), 2),\n          \"n_out\": sum(1 for r in rows\n                       if r[\"self_key\"] == k and r[\"direction\"] == \"expense\"),\n          \"max_out\": round(max([r[\"amount\"] for r in rows\n                                if r[\"self_key\"] == k and r[\"direction\"] == \"expense\"] or [0]), 2),\n          \"rr\": return_rate(k, TODAY + timedelta(days=1)),\n          \"declared\": p[\"directions\"].get(k),\n          \"class\": direction_class(k, TODAY + timedelta(days=1)),\n          \"buffer\": is_buffer(k, TODAY + timedelta(days=1))}\n         for k in keys],\n        key=lambda x: -x[\"out\"])\n\n    # Направления, о которых судить не по чему и клиент ещё не высказался.\n    # Пока список не пуст и профиль требует спрашивать — число показывать нельзя (ADR-0026).\n    # Спрашиваем только о том, что способно изменить бюджет: направление с\n    # оборотом 2 700 ₽ за полгода на бюджет цикла не влияет, и вопрос о нём —\n    # трение без пользы.\n    pending = [x[\"key\"] for x in dirs\n               if (x[\"out\"] >= THETA_S() or x[\"max_out\"] >= THETA_S())\n               and direction_class(x[\"key\"], TODAY + timedelta(days=1)) is None]\n\n    out = {\n        \"today\": TODAY.isoformat(),\n        \"tx_count\": len(rows),\n        \"cycles_total\": len(cycles),\n        \"intra_count\": len(intra),\n        \"cycle\": {\n            \"start\": c[\"start\"].isoformat(), \"n\": c[\"n\"], \"d\": d,\n            \"next_anchor\": c.get(\"next_anchor\").isoformat(),\n            \"anchor_shift\": c.get(\"anchor_shift\"),\n            \"D\": c[\"D\"], \"S\": c[\"S\"], \"S_rows\": c[\"S_rows\"], \"B\": c[\"B\"],\n            \"Buf0\": c[\"Buf0\"], \"Buf_rows\": c[\"Buf_rows\"], \"intra\": c[\"intra\"],\n            \"near_all\": c[\"near_all\"],\n            \"theta_rub\": c[\"theta_rub\"],\n            \"F\": Fd, \"V\": Vd, \"v\": v, \"norm\": norm, \"R\": R, \"Ost\": Ost,\n            \"days_left\": c[\"n\"] - d,\n            \"flow\": [{\"date\": r[\"date\"].isoformat(), \"desc\": r[\"description\"],\n                      \"amount\": r[\"amount\"], \"cat\": r.get(\"category\"), \"id\": r[\"id\"]}\n                     for r in sorted(c[\"flow\"], key=lambda r: (r[\"date\"], r[\"id\"]), reverse=True)],\n            \"events\": [{\"date\": r[\"date\"].isoformat(), \"desc\": r[\"description\"],\n                        \"amount\": r[\"amount\"], \"cat\": r.get(\"category\")} for r in c[\"events\"]],\n        },\n        \"level\": level, \"status\": status, \"W\": W, \"W1\": W1, \"W2\": W2,\n        \"corridor\": {str(k): v_ for k, v_ in corridor.items()},\n        \"usual_daily\": usual_daily, \"usual_daily_mean\": usual_daily_mean,\n        \"reserve_change\": res,\n        \"buffer_change\": buf,\n        \"history\": [{\"start\": cc[\"start\"].isoformat(), \"n\": cc[\"n\"], \"D\": cc[\"D\"],\n                     \"S\": cc[\"S\"], \"B\": cc[\"B\"], \"F\": cc[\"F_total\"], \"V\": cc[\"V_total\"],\n                     \"Ost\": cc[\"B\"] - cc[\"F_total\"]} for cc in cycles],\n        \"same_day\": {\"p10\": pct(same_day, .1),\n                     \"median\": statistics.median(same_day) if same_day else 0.0,\n                     \"p90\": pct(same_day, .9), \"n\": len(same_day)},\n        \"near_threshold\": [{\"desc\": r[\"description\"], \"amount\": r[\"amount\"],\n                            \"date\": r[\"date\"].isoformat()} for r in near],\n        \"share_median\": statistics.median(share_hist) if share_hist else 0.0,\n        \"share_now\": c[\"S\"] / c[\"D\"] if c[\"D\"] else 0.0,\n        \"grid\": grid,\n        \"constants\": dict(K, THETA_S=THETA_S()),\n        \"dirs\": dirs,\n        \"directions_pending\": pending,\n    }\n    return out\n", "engine/sources/__init__.py": "\"\"\"Адаптеры источников: приводят выписку любого формата к записям, которые\nпонимает модель.\n\nМодель не должна знать, как банк назвал контрагента. Она спрашивает у записи\nтри вещи: это событие дохода, это перевод себе и на какое направление.\nВсё остальное — забота источника.\n\"\"\"\n", "engine/sources/tbank_pdf.py": "# -*- coding: utf-8 -*-\n\"\"\"Источник: справка о движении средств Т-Банка (вывод tools/parse_statement.py).\n\nОтличается от выгрузки из приложения тремя вещами, и все три меняют разметку:\n\n1. Категорий нет вовсе. Событие дохода распознаётся по описанию: «Заработная\n   плата» приходит и напрямую, и через работодателя — «Пополнение. ООО \"БК\n   \"ОЛИМП\". Заработная плата».\n2. Направление названо у исходящих и не названо у входящих. Возврат приходит\n   как «Перевод себе», и с каким счётом он связан, справка не говорит.\n   Профиль может связать их вручную через return_alias (ADR-0026).\n3. Перевод себе и перевод другому человеку по номеру телефона выглядят\n   одинаково. Поэтому источник помечает КАНДИДАТОВ, а решает клиент: чужое\n   направление объявляется в профиле классом \"external\".\n\"\"\"\nimport re\nfrom datetime import date\n\nSALARY = re.compile(r\"заработная плата|зарплата\", re.I)\nDIGITS = re.compile(r\"\\d{3,}\")\n\nRETURN_UNATTRIBUTED = \"перевод себе *\"   # возврат без направления\n\n# Свойства источника, а не выбор клиента: справка не связывает входящий перевод\n# с направлением, поэтому нулевая доля возврата здесь ничего не доказывает,\n# а класс направления обязан объявить клиент (ADR-0026).\nPROFILE_DEFAULTS = {\"returns_attributed\": False, \"unknown_direction\": \"ask\"}\n\n\ndef direction_key(desc):\n    \"\"\"Ключ направления перевода. None — операция переводом не является.\n\n    Номер договора и номер телефона — устойчивые ключи: в отличие от имени\n    контрагента они не сливают два разных счёта в один.\"\"\"\n    m = re.search(r\"(?:на договор|с договора)\\s+(\\d+)\", desc)\n    if m:\n        return f\"договор {m.group(1)}\"\n    m = re.search(r\"по номеру телефона\\s+(\\+\\d+)\", desc)\n    if m:\n        return f\"телефон {m.group(1)}\"\n    m = re.search(r\"на счёт\\s+(\\d+)\", desc)\n    if m:\n        return f\"счёт {m.group(1)}\"\n    if \"брокерск\" in desc.lower():\n        return \"брокерский счёт\"\n    if desc == \"Перевод себе\":\n        return RETURN_UNATTRIBUTED\n    if desc.startswith(\"Пополнение. Сбербанк Онлайн\"):\n        return \"Сбербанк Онлайн\"\n    if desc.startswith(\"Перевод на карту другого банка\"):\n        return \"карта другого банка\"\n    return None\n\n\ndef norm_desc(desc):\n    \"\"\"Описание без номеров: «Перевод от ИП Иванов 1234» и то же с другим\n    номером — одно и то же поступление, и спрашивать про них надо один раз.\"\"\"\n    return DIGITS.sub(\"N\", desc).strip()\n\n\ndef load(ops, profile=None):\n    \"\"\"ops — список операций из tools/parse_statement.py.\"\"\"\n    p = profile or {}\n    alias = p.get(\"return_alias\", {})\n    extra = [re.compile(x, re.I) for x in p.get(\"salary_patterns\", [])]\n    # описания, которые клиент сам объявил своим доходом: у него зарплата может\n    # называться как угодно — переводом от ИП, выплатой, пополнением\n    declared_income = set(p.get(\"salary_descriptions\", []))\n\n    rows = []\n    for o in ops:\n        desc = o[\"description\"]\n        is_salary = o[\"direction\"] == \"income\" and (\n            SALARY.search(desc) or any(r.search(desc) for r in extra)\n            or norm_desc(desc) in declared_income)\n        key = direction_key(desc)\n        rows.append({\n            \"id\": o[\"id\"],\n            \"date\": o[\"date\"] if isinstance(o[\"date\"], date) else date.fromisoformat(o[\"date\"]),\n            \"amount\": o[\"amount\"],\n            \"direction\": o[\"direction\"],\n            \"description\": desc,\n            \"category\": None,                 # справка категорий не содержит\n            \"income_kind\": \"salary\" if is_salary else None,\n            \"self_key\": alias.get(key, key),\n        })\n    rows.sort(key=lambda r: (r[\"date\"], r[\"id\"]))\n    return rows\n\n\ndef income_candidates(ops, top=12):\n    \"\"\"Крупные входящие, сгруппированные по описанию, — материал для вопроса\n    «что из этого твой доход», когда модель не узнала зарплату сама.\"\"\"\n    agg = {}\n    for o in ops:\n        if o[\"direction\"] != \"income\":\n            continue\n        k = norm_desc(o[\"description\"])\n        a = agg.setdefault(k, {\"desc\": k, \"n\": 0, \"sum\": 0.0, \"max\": 0.0, \"months\": set()})\n        a[\"n\"] += 1\n        a[\"sum\"] += o[\"amount\"]\n        a[\"max\"] = max(a[\"max\"], o[\"amount\"])\n        a[\"months\"].add(o[\"date\"][:7])\n    out = []\n    for a in agg.values():\n        a[\"months\"] = len(a[\"months\"])       # в скольких месяцах встречалось\n        out.append(a)\n    # сортируем по сумме: регулярный доход почти всегда крупнейший поток внутрь\n    return sorted(out, key=lambda a: -a[\"sum\"])[:top]\n\n\ndef candidates(rows, min_out=0.0):\n    \"\"\"Направления с оборотами — материал для холодного старта (ADR-0019).\n\n    Клиент отвечает не про каждую операцию, а про направление: накопления,\n    второй кошелёк или вообще чужой счёт.\"\"\"\n    agg = {}\n    for r in rows:\n        k = r[\"self_key\"]\n        if not k:\n            continue\n        a = agg.setdefault(k, {\"key\": k, \"out\": 0.0, \"inc\": 0.0, \"n_out\": 0,\n                               \"n_inc\": 0, \"max_out\": 0.0, \"last\": None, \"desc\": r[\"description\"]})\n        if r[\"direction\"] == \"expense\":\n            a[\"out\"] += r[\"amount\"]; a[\"n_out\"] += 1\n            a[\"max_out\"] = max(a[\"max_out\"], r[\"amount\"])\n        else:\n            a[\"inc\"] += r[\"amount\"]; a[\"n_inc\"] += 1\n        a[\"last\"] = max(a[\"last\"] or r[\"date\"], r[\"date\"])\n    out = [a for a in agg.values() if a[\"out\"] >= min_out or a[\"max_out\"] >= min_out]\n    for a in out:\n        a[\"last\"] = a[\"last\"].isoformat()\n    return sorted(out, key=lambda a: -a[\"out\"])\n"};
+const PROFILE_KEY = "tbudget.profile.v1";
+const $ = s => document.querySelector(s);
+
+const money = v => (v == null ? "—" : Math.round(v).toLocaleString("ru-RU") + " ₽");
+const MONTHS = ["января","февраля","марта","апреля","мая","июня",
+                "июля","августа","сентября","октября","ноября","декабря"];
+/** «3 сентября» вместо «2026-09-03»: это читает человек, а не парсер. */
+const human = iso => { const [y,m,d] = iso.split("-"); return +d + " " + MONTHS[+m-1]; };
+/** Русское склонение: 1 день, 2 дня, 7 дней. */
+const plural = (n, f) => {
+  const a = Math.abs(n) % 100, b = a % 10;
+  return f[a > 10 && a < 20 ? 2 : b === 1 ? 0 : b > 1 && b < 5 ? 1 : 2];
+};
+const days = n => n + " " + plural(n, ["день","дня","дней"]);
+/** Ширина коридора: 99 — это «коридора нет», а не «он очень широкий». */
+const fmtW = w => (w >= 99 ? "ещё не измерен" : w.toFixed(2));
+const showErr = m => { const e = $("#err"); e.hidden = false; e.textContent = m; };
+const step = n => {
+  $("#steps").hidden = false;
+  document.querySelectorAll(".steps i").forEach(i => i.classList.toggle("on", +i.dataset.s === n));
+};
+
+let py = null, OPS = null, STATE = null;
+let profile = loadProfile();
+
+function loadProfile() {
+  try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || {directions:{}}; }
+  catch { return {directions:{}}; }
+}
+function saveProfile() {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch {}
+}
+
+// --- движок ---------------------------------------------------------------
+async function boot() {
+  py = await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/npm/pyodide@0.28.3/" });
+  py.FS.mkdirTree("/app/engine/sources");
+  for (const [path, src] of Object.entries(PYFILES)) py.FS.writeFile("/app/" + path, src);
+  py.runPython(`
+import sys, json
+sys.path.insert(0, "/app")
+from datetime import date
+from parse_statement import parse_text, period
+from engine import model
+from engine.sources import tbank_pdf
+
+def run(raw, profile_json):
+    profile = json.loads(profile_json)
+    ops, totals = parse_text(raw)
+    if not ops:
+        return json.dumps({"error": "no_ops"})
+    profile = dict(tbank_pdf.PROFILE_DEFAULTS, **profile)
+    rows = tbank_pdf.load(ops, profile)
+    # «сегодня» — конец периода справки, а не дата последней операции
+    _, upto = period(raw)
+    state = model.compute(rows, profile, date.fromisoformat(upto) if upto else None)
+    state["totals"] = {"income": totals[0], "expense": totals[1]}
+    state["ops_count"] = len(ops)
+    state["period"] = list(period(raw)) if upto else [ops[0]["date"], ops[-1]["date"]]
+    if state.get("error"):
+        # разметить не удалось: состояния нет, и производных от него величин тоже
+        return json.dumps(state, ensure_ascii=False, default=str)
+    state["candidates"] = tbank_pdf.candidates(rows, state["constants"]["THETA_S"])
+    return json.dumps(state, ensure_ascii=False, default=str)
+
+def income_options(raw):
+    """Что показать, когда зарплата не распозналась: крупные входящие."""
+    ops, _ = parse_text(raw)
+    return json.dumps(tbank_pdf.income_candidates(ops), ensure_ascii=False)
+`);
+  $("#engine-state").innerHTML = "движок готов";
+}
+
+async function pdfToText(buf) {
+  const doc = await window.__pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
+  let out = "";
+  for (let i = 1; i <= doc.numPages; i++) {
+    const tc = await (await doc.getPage(i)).getTextContent();
+    for (const it of tc.items) {
+      if (it.str !== undefined) out += it.str;
+      if (it.hasEOL) out += "\n";
+    }
+    out += "\n";
+  }
+  return out;
+}
+
+function compute() {
+  STATE = JSON.parse(py.globals.get("run")(RAW, JSON.stringify(profile)));
+  return STATE;
+}
+
+let RAW = "";
+async function handleFile(f) {
+  $("#err").hidden = true;
+  if (!f || f.type !== "application/pdf") return showErr("Нужен PDF со справкой о движении средств.");
+  $("#engine-state").innerHTML = '<span class="spin"></span> читаю справку…';
+  try {
+    RAW = await pdfToText(await f.arrayBuffer());
+    const st = compute();
+    if (st.error === "no_ops")
+      return showErr("В файле не нашлось ни одной операции. Это точно справка о движении средств Т-Банка?");
+    if (st.error === "no_income" || st.error === "no_cycles") return renderIncome(st.error);
+    render();
+  } catch (e) {
+    console.error(e);
+    showErr("Не смог разобрать файл: " + e.message);
+  }
+}
+
+// --- экраны ---------------------------------------------------------------
+function render() {
+  if (STATE.directions_pending.length) return renderOnboarding();
+  renderResult();
+}
+
+const CLASSES = [
+  ["reserve",  "Накопления",      "деньги уходят и не возвращаются"],
+  ["buffer",   "Второй кошелёк",  "оттуда я трачу, деньги возвращаются"],
+  ["external", "Это не мой счёт", "перевод другому человеку"],
+];
+
+/** Зарплата названа не «Заработная плата»: спрашиваем, что считать доходом.
+    Без этого человек с доходом от ИП или подработкой упирается в стену. */
+function renderIncome(kind) {
+  step(2);
+  ["#scr-upload", "#scr-onb", "#scr-res"].forEach(x => $(x).hidden = true);
+  $("#scr-income").hidden = false;
+  const opts = JSON.parse(py.globals.get("income_options")(RAW));
+  $("#inc-lede").innerHTML = kind === "no_income"
+    ? `Ни одно поступление не похоже на зарплату — у тебя она названа иначе.
+       Отметь то, что приходит регулярно и от чего ты отсчитываешь свой месяц.`
+    : `Поступления нашлись, но разметить по ним циклы не вышло — возможно, доход
+       нерегулярный или период справки слишком короткий. Отметь, что считать доходом.`;
+  const sel = new Set(profile.salary_descriptions || []);
+  $("#inc-list").innerHTML = opts.map(o => `<div class="dir" data-d="${o.desc.replace(/"/g, "&quot;")}">
+      <div class="kk">${o.desc}</div>
+      <div class="st num">${o.n} ${plural(o.n, ["поступление","поступления","поступлений"])} на ${money(o.sum)} ·
+        в ${o.months} ${plural(o.months, ["месяце","месяцах","месяцах"])} · крупнейшее ${money(o.max)}</div>
+      <div class="opts"><button data-pick="1" class="${sel.has(o.desc) ? "sel" : ""}">Это мой доход</button></div>
+    </div>`).join("");
+  $("#inc-list").onclick = e => {
+    const b = e.target.closest("button[data-pick]"); if (!b) return;
+    const d = b.closest(".dir").dataset.d;
+    const cur = new Set(profile.salary_descriptions || []);
+    cur.has(d) ? cur.delete(d) : cur.add(d);
+    profile.salary_descriptions = [...cur];
+    b.classList.toggle("sel", cur.has(d));
+    saveProfile();
+    $("#inc-done").disabled = cur.size === 0;
+  };
+  $("#inc-done").disabled = !(profile.salary_descriptions || []).length;
+  $("#inc-done").onclick = () => {
+    const st = compute();
+    if (st.error) return showErr(st.error === "no_cycles"
+      ? "По отмеченным поступлениям всё равно не вышло разметить ни одного цикла. Нужна справка за больший период."
+      : "Не удалось посчитать: " + st.error);
+    $("#err").hidden = true; render();
+  };
+}
+
+function renderOnboarding() {
+  step(2);
+  ["#scr-upload", "#scr-res", "#scr-income"].forEach(x => $(x).hidden = true);
+  $("#scr-onb").hidden = false;
+  const pend = STATE.directions_pending;
+  const byKey = Object.fromEntries(STATE.candidates.map(c => [c.key, c]));
+  $("#onb-lede").innerHTML = `В справке ${STATE.ops_count} операций за
+    ${human(STATE.period[0])} — ${human(STATE.period[1])}. Справка показывает, <b>куда</b> ушёл перевод,
+    но не показывает, <b>откуда</b> он вернулся — поэтому про ${pend.length === 1 ? "одно направление" : "эти направления"}
+    ответить можешь только ты. Остальные ${STATE.dirs.length - pend.length} модель разобрала сама.`;
+
+  $("#dirs").innerHTML = pend.map(k => {
+    const c = byKey[k] || {out:0, n_out:0, max_out:0};
+    return `<div class="dir" data-k="${k}">
+      <div class="kk">${k}</div>
+      <div class="st num">${c.n_out} ${plural(c.n_out, ["перевод","перевода","переводов"])} на ${money(c.out)} · крупнейший ${money(c.max_out)}</div>
+      <div class="opts">${CLASSES.map(([v, t, h]) =>
+        `<button data-v="${v}" title="${h}">${t}</button>`).join("")}</div>
+    </div>`;
+  }).join("");
+
+  $("#dirs").onclick = e => {
+    const b = e.target.closest("button[data-v]"); if (!b) return;
+    const box = b.closest(".dir");
+    box.querySelectorAll("button").forEach(x => x.classList.toggle("sel", x === b));
+    profile.directions[box.dataset.k] = b.dataset.v;
+    saveProfile();
+    $("#onb-done").disabled = pend.some(k => !profile.directions[k]);
+  };
+  $("#onb-done").disabled = pend.some(k => !profile.directions[k]);
+  $("#onb-done").onclick = () => { compute(); render(); };
+}
+
+const SAY = {
+  calm:  ["Тратишь спокойнее обычного", "спокойно"],
+  usual: ["Тратишь как обычно",          "обычно"],
+  slow:  ["Темп выше обычного",          "быстрее обычного"],
+  over:  ["Бюджет цикла исчерпан",       "перерасход"],
+};
+let revealed = false;   // клиент раскрыл число вручную (ADR-0008)
+
+function renderResult() {
+  step(3);
+  ["#scr-upload", "#scr-onb", "#scr-income"].forEach(x => $(x).hidden = true);
+  $("#scr-res").hidden = false;
+  const c = STATE.cycle, over = c.Ost < 0, lvl = STATE.level;
+  const [statusHead, statusPill] = SAY[STATE.status] || ["—", "—"];
+  const usual = STATE.usual_daily;
+
+  // §2.7: чем шире коридор модели, тем меньше она себе позволяет сказать.
+  // Уровень 1 — только «присматриваюсь», уровень 2 — статус без числа,
+  // уровень 3 — статус и число. Перерасход обязана назвать всегда (§2.6).
+  let pill, head, sub, why, open = over || lvl === 3 || revealed;
+  if (over) {
+    pill = "перерасход"; head = "Вышел за бюджет на " + money(-c.Ost);
+    sub = "Это факт, а не прогноз: потрачено больше, чем цикл выдерживает.";
+    why = `До дохода ${days(c.days_left)}.` + (usual ? ` Обычно в такие дни ты тратишь ${money(usual)} в день.` : "");
+  } else if (lvl === 1) {
+    pill = "присматриваюсь"; head = "Пока присматриваюсь";
+    sub = (usual ? `Обычно ты тратишь около ${money(usual)} в день. ` : "")
+        + `За ${days(c.d)} судить о темпе рано.`;
+    why = `Разброс собственных прогнозов модели на этом дне — ${fmtW(STATE.W)} при пороге
+           ${STATE.W1}. Числа остатка на таком разбросе не даю.`;
+  } else if (lvl === 2) {
+    pill = statusPill; head = statusHead;
+    sub = `Темп сейчас ${c.R < 1 ? "ниже" : "выше"} того, что бюджет выдержит, в ` +
+          `${(c.R < 1 ? 1 / c.R : c.R).toFixed(1)} раза.`;
+    why = `Разброс прогнозов ${fmtW(STATE.W)} — шире ${STATE.W2}. Статус даю, число остатка ещё нет.`;
+  } else {
+    pill = statusPill; head = statusHead;
+    sub = `Осталось ${money(c.Ost)} на ${days(c.days_left)} — это ${money(c.norm)} в день.`;
+    why = `Разброс прогнозов сузился до ${fmtW(STATE.W)}. Числу можно верить.`;
+  }
+
+  $("#hero").className = "card st-" + (over ? "over" : lvl === 1 ? "wait" : STATE.status);
+  $("#hero").innerHTML = `
+    <div class="pill"><span class="dot"></span><span>${pill}</span></div>
+    <div class="headline">${head}</div>
+    <p class="sub">${sub}</p>
+    <div class="figs">
+      <div class="fig"><div class="k">твой темп</div><div class="v num">${money(c.v)}<span class="muted"> /день</span></div></div>
+      <div class="fig"><div class="k">потрачено</div><div class="v num">${money(c.F)}</div></div>
+      ${open ? `
+      <div class="fig"><div class="k">можно тратить</div><div class="v num">${money(c.norm)}<span class="muted"> /день</span></div></div>
+      <div class="fig"><div class="k">${over ? "перерасход" : "осталось"}</div>
+        <div class="v num" ${over ? 'style="color:var(--neg)"' : ""}>${money(Math.abs(c.Ost))}</div></div>`
+      : `
+      <div class="fig"><div class="k">бюджет и остаток</div>
+        <div class="v num" style="letter-spacing:.08em">•••</div></div>
+      <div class="fig"><div class="k">до дохода</div><div class="v num">${days(c.days_left)}</div></div>`}
+    </div>
+    ${open ? `<div class="bar"><i style="width:${Math.min(100, 100 * c.F / (c.B || 1)).toFixed(1)}%"></i></div>` : ""}
+    <p class="muted" style="margin:10px 0 0">День ${c.d} из ${c.n}. ${why}</p>
+    ${open ? "" : `<button id="reveal" style="margin-top:12px">Всё равно показать число</button>`}`;
+  const rv = $("#reveal");
+  if (rv) rv.onclick = () => { revealed = true; renderResult(); };
+
+  $("#budget").innerHTML = `
+    <h2>Откуда взялся бюджет</h2>
+    <p class="sub">Бюджет цикла — это доход минус то, что ты сразу вывел из обращения.
+      Деньги на втором кошельке из него не вычитаются: ты ими всё равно платишь.</p>
+    <table>
+      <tr><td>Зарплата ${human(c.start)}</td><td>${money(c.D)}</td></tr>
+      <tr><td>− отложено в накопления</td><td>−${money(c.S)}</td></tr>
+      <tr><td><b>Бюджет цикла</b></td><td><b>${money(c.B)}</b></td></tr>
+      ${c.Buf0 ? `<tr><td>лежит на втором кошельке<br><span class="muted">часть бюджета, не вычитается</span></td><td>${money(c.Buf0)}</td></tr>` : ""}
+      <tr><td>Крупная трата считается событием от</td><td>${money(c.theta_rub)}</td></tr>
+    </table>`;
+
+  const cls = {reserve:"накопления", buffer:"второй кошелёк", external:"не мой счёт"};
+  const rows = STATE.dirs.filter(d => d.out > 0).slice(0, 12);
+  $("#dirs-res").innerHTML = `
+    <h2>Твои направления переводов</h2>
+    <p class="sub">Если модель ошиблась — поправь, темп пересчитается.
+      Отметка «накопления» уменьшит бюджет, «второй кошелёк» — увеличит.</p>
+    ${rows.map(d => `<div class="dir" data-k="${d.key}">
+        <div class="kk">${d.key}</div>
+        <div class="st num">${d.n_out} ${plural(d.n_out, ["перевод","перевода","переводов"])} на ${money(d.out)}${
+          d.declared ? "" : ` · модель решила сама${d.rr != null ? `, возврат ${(d.rr * 100).toFixed(0)}%` : ""}`}</div>
+        <div class="opts">${CLASSES.map(([v, t]) =>
+          `<button data-v="${v}" class="${(d.declared || d.class) === v ? "sel" : ""}">${t}</button>`).join("")}</div>
+      </div>`).join("")}`;
+  $("#dirs-res").onclick = e => {
+    const b = e.target.closest("button[data-v]"); if (!b) return;
+    profile.directions[b.closest(".dir").dataset.k] = b.dataset.v;
+    saveProfile(); compute(); render();
+  };
+
+  renderFeedback();
+}
+
+function renderFeedback() {
+  const saved = profile.feedback || {};
+  const Q = [
+    ["cycle", "Границы цикла определены верно?", `Цикл начался ${human(STATE.cycle.start)}, следующая зарплата ожидается ${human(STATE.cycle.next_anchor)}.`],
+    ["saved", "Отложенное посчитано верно?", `Модель считает, что ${money(STATE.cycle.S)} ты вывел из обращения.`],
+    ["status", "Статус совпадает с твоим ощущением?", "То, что написано вверху страницы."],
+  ];
+  $("#fb").innerHTML = `
+    <h2>Что не так?</h2>
+    <p class="sub">Модель собрана на данных одного человека. Три ответа скажут, переносится ли она на тебя —
+      это единственное, чего нельзя узнать из истории.</p>
+    ${Q.map(([id, q, hint]) => `<div class="dir">
+        <div style="font-weight:650">${q}</div>
+        <div class="st">${hint}</div>
+        <div class="opts">
+          <button data-q="${id}" data-v="yes" class="${saved[id] === "yes" ? "sel" : ""}">Верно</button>
+          <button data-q="${id}" data-v="no" class="${saved[id] === "no" ? "sel" : ""}">Неверно</button>
+        </div></div>`).join("")}
+    <textarea id="fb-text" rows="3" placeholder="Что модель поняла про тебя неправильно?">${saved.text || ""}</textarea>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="primary" id="fb-copy">Скопировать ответы</button>
+      <button id="fb-file">Сохранить файлом</button>
+    </div>
+    <p class="muted" style="margin:12px 0 0">В ответы попадают только безразмерные величины —
+      доли бюджета и длины циклов. Ни сумм, ни описаний операций, ни зарплаты.</p>`;
+
+  $("#fb").onclick = e => {
+    const b = e.target.closest("button[data-q]");
+    if (b) {
+      profile.feedback = profile.feedback || {};
+      profile.feedback[b.dataset.q] = b.dataset.v;
+      saveProfile(); renderFeedback(); return;
+    }
+    if (e.target.id === "fb-copy" || e.target.id === "fb-file") {
+      profile.feedback = profile.feedback || {};
+      profile.feedback.text = $("#fb-text").value;
+      saveProfile();
+      const blob = JSON.stringify(feedbackPayload(), null, 1);
+      if (e.target.id === "fb-copy") {
+        navigator.clipboard.writeText(blob).then(() => { e.target.textContent = "Скопировано ✓"; });
+      } else {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([blob], {type:"application/json"}));
+        a.download = "tbudget-feedback.json"; a.click();
+      }
+    }
+  };
+}
+
+const incomeTotal = () => STATE.history.reduce((a, h) => a + h.D, 0);
+
+/** Безразмерная выжимка: доли бюджета и длины циклов, без рублей и описаний. */
+function feedbackPayload() {
+  const c = STATE.cycle;
+  return {
+    v: 1, answers: profile.feedback || {},
+    cycles: STATE.cycles_total, ops: STATE.ops_count,
+    period_days: STATE.history.reduce((a, h) => a + h.n, 0),
+    cycle: {n: c.n, d: c.d, parts: STATE.cycle.intra.length,
+            share_saved: +(c.S / c.D).toFixed(4),
+            share_buffer: +(c.Buf0 / c.D).toFixed(4),
+            share_spent: +(c.F / c.B).toFixed(4),
+            R: +(c.R || 0).toFixed(3), status: STATE.status, level: STATE.level},
+    history: STATE.history.map(h => ({n: h.n,
+            share_saved: +(h.S / h.D).toFixed(4),
+            share_spent: +(h.F / (h.B || 1)).toFixed(4),
+            overspent: h.Ost < 0})),
+    directions: STATE.dirs
+            .filter(d => d.out >= STATE.constants.THETA_S || d.max_out >= STATE.constants.THETA_S)
+            .map(d => ({declared: d.declared, auto: d.class, rr: d.rr, n_out: d.n_out,
+            // доля от дохода за ВЕСЬ период, а не за один цикл: оборот направления
+            // накоплен за всю историю, и делить его на одну зарплату бессмысленно
+            share_of_income: +(d.out / (incomeTotal() || 1)).toFixed(3)})),
+  };
+}
+
+// --- запуск ---------------------------------------------------------------
+$("#pick").onclick = () => $("#file").click();
+$("#file").onchange = e => handleFile(e.target.files[0]);
+const drop = $("#drop");
+["dragenter","dragover"].forEach(t => drop.addEventListener(t, e => {
+  e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(t => drop.addEventListener(t, e => {
+  e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => handleFile(e.dataTransfer.files[0]));
+step(1);
+boot().catch(e => { console.error(e); showErr("Движок не загрузился: " + e.message); });
+</script>
+</body>
+</html>
